@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.eclipse.jgit.internal.JGitText;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class RevWalkSortTest extends RevWalkTestCase {
@@ -368,7 +367,6 @@ public class RevWalkSortTest extends RevWalkTestCase {
 	}
 
 	@Test
-	@Ignore("Re-enable when I573f980abb0c97414e8e7dfcc3ac6dab2544f6c1 is reverted")
 	public void testSort_TOPO_reset_doesNotLeakFlags() throws Exception {
 		final RevCommit a = commit();
 		final RevCommit b = commit(a);
