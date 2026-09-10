@@ -18,6 +18,7 @@ import java.text.MessageFormat;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.internal.JGitText;
+import org.eclipse.jgit.internal.storage.commitgraph.CommitGraph;
 import org.eclipse.jgit.revwalk.filter.AndRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
@@ -119,10 +120,6 @@ class StartGenerator extends Generator {
 		if (walker instanceof DepthWalk) {
 			DepthWalk dw = (DepthWalk) walker;
 			g = new DepthGenerator(dw, pending);
-
-			if (walker.hasRevSort(RevSort.TOPO)) {
-				g = new TopoSortGenerator(g);
-			}
 		} else {
 			// Because the boundary generator may produce uninteresting
 			// commits we cannot allow the pending generator to dispose
@@ -130,7 +127,8 @@ class StartGenerator extends Generator {
 			//
 			boolean canDispose = !walker.hasRevSort(RevSort.BOUNDARY);
 
-			if (walker.hasRevSort(RevSort.TOPO)) {
+			if (walker.hasRevSort(RevSort.TOPO)
+					&& walker.commitGraph() != CommitGraph.EMPTY) {
 				// Doesn't need rewrite
 				g = new TopoSortPendingGenerator(w, pending, rf,
 						pendingOutputType, canDispose);
@@ -144,10 +142,14 @@ class StartGenerator extends Generator {
 			g = new RewriteGenerator(g);
 		}
 
-		if (walker.hasRevSort(RevSort.TOPO_KEEP_BRANCH_TOGETHER)
-				&& (g.outputType() & SORT_TOPO) == 0) {
-			g = new TopoNonIntermixSortGenerator(g);
+		if ((g.outputType() & SORT_TOPO) == 0) {
+			if (walker.hasRevSort(RevSort.TOPO)) {
+				g = new TopoSortGenerator(g);
+			} else if (walker.hasRevSort(RevSort.TOPO_KEEP_BRANCH_TOGETHER)) {
+				g = new TopoNonIntermixSortGenerator(g);
+			}
 		}
+
 		if (walker.hasRevSort(RevSort.REVERSE))
 			g = new LIFORevQueue(g);
 		if (boundary)
